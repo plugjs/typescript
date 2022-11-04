@@ -13,6 +13,8 @@ import {
   type Pipe,
 } from '@plugjs/plug'
 
+import { Tsc } from './src/typescript'
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -57,13 +59,13 @@ export default build({
 
   /** Generate all .d.ts files */
   transpile_types(): Pipe {
-    return this.find_sources().tsc('tsconfig.json', {
+    return this.find_sources().plug(new Tsc('tsconfig.json', {
       noEmit: false,
       declaration: true,
       emitDeclarationOnly: true,
       outDir: 'dist',
       extraTypesDir: 'types',
-    })
+    }))
   },
 
   /** Transpile all source code */
