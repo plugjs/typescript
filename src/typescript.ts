@@ -2,20 +2,19 @@
 /// <reference path="./index.ts"/>
 
 import ts from 'typescript' // TypeScript does NOT support ESM modules
-import { log } from '@plugjs/plug'
-import { BuildFailure, assertPromises } from '@plugjs/plug/asserts'
+import { assertPromises, BuildFailure } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $p } from '@plugjs/plug/logging'
-import { resolveFile, resolveAbsolutePath } from '@plugjs/plug/paths'
+import { resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
 import { parseOptions, walk } from '@plugjs/plug/utils'
 
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
 
-import type { Plug, PipeParameters, Context } from '@plugjs/plug/pipe'
 import type { AbsolutePath } from '@plugjs/plug/paths'
-import type { ExtendedCompilerOptions } from '@plugjs/plug'
+import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { ExtendedCompilerOptions } from './index'
 
 
 /* ========================================================================== *
@@ -83,8 +82,8 @@ export class Tsc implements Plug<Files> {
 
     /* Prep for compilation */
     const paths = [ ...files.absolutePaths() ]
-    for (const path of paths) log.trace(`Compiling "${$p(path)}"`)
-    log.info('Compiling', paths.length, 'files')
+    for (const path of paths) context.log.trace(`Compiling "${$p(path)}"`)
+    context.log.info('Compiling', paths.length, 'files')
 
     /* If we have an extra types directory, add all the .d.ts files in there */
     if (extraTypesDir) {
@@ -92,13 +91,13 @@ export class Tsc implements Plug<Files> {
 
       for await (const file of walk(directory, [ '**/*.d.ts' ])) {
         const path = resolveAbsolutePath(directory, file)
-        log.debug(`Including extra type file "${$p(path)}"`)
+        context.log.debug(`Including extra type file "${$p(path)}"`)
         paths.push(path)
       }
     }
 
     /* Log out what we'll be our final compilation options */
-    log.debug('Compliation options', options)
+    context.log.debug('Compliation options', options)
 
     /* Typescript host, create program and compile */
     const host = new TypeScriptHost(rootDir)
@@ -114,10 +113,10 @@ export class Tsc implements Plug<Files> {
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
-        log.trace('Written', $p(file))
+        context.log.trace('Written', $p(file))
       }).catch(/* coverage ignore next */ (error) => {
         const outFile = resolveAbsolutePath(outDir, fileName)
-        log.error('Error writing to', $p(outFile), error)
+        context.log.error('Error writing to', $p(outFile), error)
         throw BuildFailure.fail()
       }))
     })
@@ -132,7 +131,7 @@ export class Tsc implements Plug<Files> {
 
     /* All done, build our files and return it */
     const outputs = builder.build()
-    log.info('TSC produced', outputs.length, 'files into', $p(outputs.directory))
+    context.log.info('TSC produced', outputs.length, 'files into', $p(outputs.directory))
     return outputs
   }
 }
