@@ -22,7 +22,7 @@ import type { ExtendedCompilerOptions } from '@plugjs/plug'
  * WORKER PLUG                                                                *
  * ========================================================================== */
 
-export default class Tsc implements Plug<Files> {
+export class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: ExtendedCompilerOptions
 
@@ -69,12 +69,13 @@ export default class Tsc implements Plug<Files> {
     /* The baseURL is resolved, as well */
     if (overrides.baseUrl) overrides.baseUrl = context.resolve(overrides.baseUrl)
 
+    /* The baseURL is resolved, as well */
+    if (overrides.outFile) overrides.outFile = context.resolve(overrides.outFile)
+
     /* We can now get our compiler options, and check any and all overrides */
     const { errors, options } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
-        overrides, // overrides from constructor, might be an empty object
-        context.buildFile, // the build file where the overrides were specified,
-        baseDir) // base dir where to resolve overrides
+        overrides) // overrides from constructor, might be an empty object
 
     /* Update report and fail on errors */
     updateReport(report, errors, baseDir)
@@ -114,7 +115,7 @@ export default class Tsc implements Plug<Files> {
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
         log.trace('Written', $p(file))
-      }).catch((error) => {
+      }).catch(/* coverage ignore next */ (error) => {
         const outFile = resolveAbsolutePath(outDir, fileName)
         log.error('Error writing to', $p(outFile), error)
         throw BuildFailure.fail()
@@ -126,6 +127,7 @@ export default class Tsc implements Plug<Files> {
 
     /* Update report and fail on errors */
     updateReport(report, result.diagnostics, rootDir)
+    /* coverage ignore if / only on write errors */
     if (report.errors) report.done(true)
 
     /* All done, build our files and return it */

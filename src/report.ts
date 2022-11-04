@@ -29,7 +29,9 @@ function convertDiagnostics(
     let level: ReportLevel
     switch (diagnostic.category) {
       case ts.DiagnosticCategory.Error: level = ERROR; break
+      // coverage ignore next / generally not emitted
       case ts.DiagnosticCategory.Warning: level = WARN; break
+      // coverage ignore next / message and suggestion
       default: level = NOTICE
     }
 
@@ -50,6 +52,7 @@ function convertDiagnostics(
       const file = resolveAbsolutePath(directory, sourceFile.fileName)
       const source = sourceFile.getFullText()
 
+      // coverage ignore else
       if (start !== undefined) {
         const position = sourceFile.getLineAndCharacterOfPosition(start)
         let { line, character: column } = position

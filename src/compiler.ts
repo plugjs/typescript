@@ -20,6 +20,7 @@ implements ts.CompilerHost {
     return ts.createSourceFile(fileName, code, languageVersion)
   }
 
+  /* coverage ignore next */
   /** Never write any files */
   writeFile(fileName: string): void {
     throw new Error(`Cowardly refusing to write "${fileName}"`)
@@ -52,6 +53,7 @@ implements ts.CompilerHost {
 
   /** Return the canonical name for the specified file */
   getCanonicalFileName(fileName: string): string {
+    /* coverage ignore if */
     if (ts.sys.useCaseSensitiveFileNames) return fileName
 
     // Lifted from TypeScript sources

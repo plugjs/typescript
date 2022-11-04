@@ -1,5 +1,4 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
-import { readFile } from '@plugjs/plug/fs'
 import { getAbsoluteParent, resolveAbsolutePath } from '@plugjs/plug/paths'
 
 import type { AbsolutePath } from '@plugjs/plug/paths'
@@ -17,10 +16,9 @@ function mergeResults(
     base: CompilerOptionsAndDiagnostics,
     override: CompilerOptionsAndDiagnostics,
 ): CompilerOptionsAndDiagnostics {
-  return {
-    options: { ...base.options, ...override.options },
-    errors: [ ...base.errors, ...override.errors ],
-  }
+  const options = { ...base.options, ...override.options }
+  const errors = [ ...base.errors, ...override.errors ]
+  return errors.length ? { options: {}, errors } : { options, errors: [] }
 }
 
 /* ========================================================================== */
@@ -32,8 +30,7 @@ async function loadOptions(
   const dir = getAbsoluteParent(file)
 
   // Load up our config file and convert is wicked JSON
-  const data = await readFile(file, 'utf-8')
-  const { config, error } = ts.parseConfigFileTextToJson(file, data)
+  const { config, error } = ts.readConfigFile(file, ts.sys.readFile)
   if (error) return { options: {}, errors: [ error ] }
 
   // Parse up the configuration file as options
@@ -49,11 +46,12 @@ async function loadOptions(
 
   // Triple check that we are not recursively importing this file
   if (stack.includes(ext)) {
+    const data = ts.sys.readFile(file)
     return { options: {}, errors: [ {
       messageText: `Circularity detected extending from "${ext}"`,
       category: ts.DiagnosticCategory.Error,
       code: 18000, // copied from typescript internals...
-      file: ts.createSourceFile(file, data, ts.ScriptTarget.JSON, false, ts.ScriptKind.JSON),
+      file: ts.createSourceFile(file, data!, ts.ScriptTarget.JSON, false, ts.ScriptKind.JSON),
       start: undefined,
       length: undefined,
     } ] }
@@ -72,26 +70,22 @@ export async function getCompilerOptions(
 export async function getCompilerOptions(
   file: AbsolutePath | undefined,
   overrides: ts.CompilerOptions,
-  overridesFile: AbsolutePath,
-  overridesBasePath: AbsolutePath,
 ): Promise<CompilerOptionsAndDiagnostics>
 
 /** Load compiler options from a JSON file, and merge in the overrides */
 export async function getCompilerOptions(
     file?: AbsolutePath,
-    ...override: [ ts.CompilerOptions, AbsolutePath, AbsolutePath ] | []
+    overrides?: ts.CompilerOptions,
 ): Promise<CompilerOptionsAndDiagnostics> {
-  let result: CompilerOptionsAndDiagnostics = { options: ts.getDefaultCompilerOptions(), errors: [] }
+  const options = ts.getDefaultCompilerOptions()
+  let result: CompilerOptionsAndDiagnostics = { options, errors: [] }
 
   // If we have a file to parse, load it, otherwise try "tsconfig.json"
   if (file) result = mergeResults(result, await loadOptions(file))
 
   // If we have overrides, merge them
-  if (override.length) {
-    const [ overrides, overridesFile, overridesDir ] = override
-    const options = ts.convertCompilerOptionsFromJson(overrides, overridesDir, overridesFile)
-    delete options.options.configFilePath // remove build file name...
-    result = mergeResults(result, options)
+  if (overrides) {
+    result = mergeResults(result, { options: overrides, errors: [] })
   }
 
   // Return all we have
