@@ -35,11 +35,11 @@
   "devDependencies": {
     "@plugjs/cov8": "file:../cov8/plugjs-cov8-0.1.0.tgz",
     "@plugjs/eslint": "file:../eslint/plugjs-eslint-0.1.0.tgz",
-    "@plugjs/eslint-plugin": "^0.0.5",
+    "@plugjs/eslint-plugin": "^0.0.6",
     "@plugjs/mocha": "file:../mocha/plugjs-mocha-0.1.0.tgz",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "@types/chai": "^4.3.3",
-    "@types/node": "^16.18.3",
+    "@types/node": "<17",
     "chai": "^4.3.6"
   },
   "dependencies": {
