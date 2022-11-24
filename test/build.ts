@@ -1,14 +1,15 @@
+import assert from 'node:assert'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import '@plugjs/mocha'
-import ts from 'typescript'
-import { expect } from 'chai'
-import { assert, build, find, merge, resolve, rmrf } from '@plugjs/plug'
+import '@plugjs/jasmine'
+import { build, find, merge, resolve, rmrf } from '@plugjs/plug'
 import { Files } from '@plugjs/plug/files'
 import { mkdtemp } from '@plugjs/plug/fs'
+import ts from 'typescript'
 
 import { Tsc } from '../src/typescript'
+
 
 export default build({
   async test_simple() {
@@ -52,7 +53,7 @@ export default build({
           }))
 
       const files = [ ...await find('**', { directory: dir }) ].sort()
-      expect(files).to.eql([
+      assert.deepEqual(files, [
         'empty.d.ts',
         'empty.js',
         'simple.d.ts',
@@ -77,7 +78,7 @@ export default build({
           }))
 
       const files = [ ...await find('**', { directory: dir }) ].sort()
-      expect(files).to.eql([
+      assert.deepEqual(files, [
         'output.d.ts',
         'output.js',
       ].sort())
@@ -98,7 +99,7 @@ export default build({
           }))
 
       const files = [ ...await find('**', { directory: dir }) ].sort()
-      expect(files).to.eql([
+      assert.deepEqual(files, [
         'data/empty.d.ts',
         'data/empty.js',
         'data/simple.d.ts',
@@ -125,7 +126,7 @@ export default build({
           }))
 
       const files = [ ...await find('**', { directory: dir }) ].sort()
-      expect(files).to.eql([
+      assert.deepEqual(files, [
         'a/one.js',
         'b/two.js',
       ].sort())
@@ -151,7 +152,7 @@ export default build({
           }))
 
       const files = [ ...await find('**', { directory: dir }) ].sort()
-      expect(files).to.eql([
+      assert.deepEqual(files, [
         'a/one.js',
         'b/two.js',
       ].sort())
@@ -170,7 +171,7 @@ export default build({
   },
 
   async test_options() {
-    await find('options.test.ts', { directory: '@' }).mocha()
+    await find('options.test.ts', { directory: '@' }).jasmine()
   },
 
   async test(): Promise<void> {
