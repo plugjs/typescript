@@ -38,7 +38,7 @@
     "@plugjs/eslint-plugin": "^0.1.0",
     "@plugjs/jasmine": "^0.1.0",
     "@plugjs/plug": "^0.1.0",
-    "@types/node": "<17",
+    "@types/node": "<19",
     "chai": "^4.3.7"
   },
   "dependencies": {
